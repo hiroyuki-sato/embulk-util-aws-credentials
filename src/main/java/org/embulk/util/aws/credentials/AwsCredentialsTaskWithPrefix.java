@@ -1,14 +1,11 @@
 package org.embulk.util.aws.credentials;
 
+import java.util.Optional;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.spi.unit.LocalFile;
 
-import java.util.Optional;
-
-public interface AwsCredentialsTaskWithPrefix
-    extends AwsCredentialsConfig
-{
+public interface AwsCredentialsTaskWithPrefix extends AwsCredentialsConfig {
     @Override
     @Config("aws_auth_method")
     @ConfigDefault("\"basic\"")

@@ -13,30 +13,24 @@ import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.SystemPropertiesCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfilesConfigFile;
+import java.util.Optional;
 import org.embulk.config.ConfigException;
 import org.embulk.spi.Exec;
 import org.slf4j.Logger;
 
-import java.util.Optional;
-
-public abstract class AwsCredentials
-{
-    private AwsCredentials()
-    {
+public abstract class AwsCredentials {
+    private AwsCredentials() {
     }
 
-    public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTaskWithPrefix task)
-    {
+    public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTaskWithPrefix task) {
         return getAWSCredentialsProvider("aws_", task);
     }
 
-    public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTask task)
-    {
+    public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTask task) {
         return getAWSCredentialsProvider("", task);
     }
 
-    private static AWSCredentialsProvider getAWSCredentialsProvider(String prefix, AwsCredentialsConfig task)
-    {
+    private static AWSCredentialsProvider getAWSCredentialsProvider(String prefix, AwsCredentialsConfig task) {
         String authMethodOption = prefix + "auth_method";
         String sessionTokenOption = prefix + "session_token";
         String profileFileOption = prefix + "profile_file";
@@ -57,31 +51,26 @@ public abstract class AwsCredentials
                 reject(task.getProfileFile(), profileFileOption);
                 reject(task.getProfileName(), profileNameOption);
                 return new AWSCredentialsProvider() {
-                    public AWSCredentials getCredentials()
-                    {
+                    public AWSCredentials getCredentials() {
                         return new AnonymousAWSCredentials();
                     }
 
-                    public void refresh()
-                    {
+                    public void refresh() {
                     }
                 };
-            }
-            else {
-                String accessKeyId = require(task.getAccessKeyId(), "'access_key_id', 'secret_access_key'");
-                String secretAccessKey = require(task.getSecretAccessKey(), "'secret_access_key'");
+            } else {
                 reject(task.getSessionToken(), sessionTokenOption);
                 reject(task.getProfileFile(), profileFileOption);
                 reject(task.getProfileName(), profileNameOption);
+                final String accessKeyId = require(task.getAccessKeyId(), "'access_key_id', 'secret_access_key'");
+                final String secretAccessKey = require(task.getSecretAccessKey(), "'secret_access_key'");
                 final BasicAWSCredentials creds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
                 return new AWSCredentialsProvider() {
-                    public AWSCredentials getCredentials()
-                    {
+                    public AWSCredentials getCredentials() {
                         return creds;
                     }
 
-                    public void refresh()
-                    {
+                    public void refresh() {
                     }
                 };
             }
@@ -103,23 +92,22 @@ public abstract class AwsCredentials
             return new InstanceProfileCredentialsProvider();
 
         case "profile":
-            {
-                reject(task.getAccessKeyId(), accessKeyIdOption);
-                reject(task.getSecretAccessKey(), secretAccessKeyOption);
-                reject(task.getSessionToken(), sessionTokenOption);
+        {
+            reject(task.getAccessKeyId(), accessKeyIdOption);
+            reject(task.getSecretAccessKey(), secretAccessKeyOption);
+            reject(task.getSessionToken(), sessionTokenOption);
 
-                String profileName = task.getProfileName().orElse("default");
-                ProfileCredentialsProvider provider;
-                if (task.getProfileFile().isPresent()) {
-                    ProfilesConfigFile file = new ProfilesConfigFile(task.getProfileFile().get().getFile());
-                    provider = new ProfileCredentialsProvider(file, profileName);
-                }
-                else {
-                    provider = new ProfileCredentialsProvider(profileName);
-                }
-
-                return overwriteBasicCredentials(task, provider.getCredentials());
+            String profileName = task.getProfileName().orElse("default");
+            ProfileCredentialsProvider provider;
+            if (task.getProfileFile().isPresent()) {
+                ProfilesConfigFile file = new ProfilesConfigFile(task.getProfileFile().get().getFile());
+                provider = new ProfileCredentialsProvider(file, profileName);
+            } else {
+                provider = new ProfileCredentialsProvider(profileName);
             }
+
+            return overwriteBasicCredentials(task, provider.getCredentials());
+        }
 
         case "properties":
             reject(task.getAccessKeyId(), accessKeyIdOption);
@@ -136,48 +124,44 @@ public abstract class AwsCredentials
             reject(task.getProfileFile(), profileFileOption);
             reject(task.getProfileName(), profileNameOption);
             return new AWSCredentialsProvider() {
-                public AWSCredentials getCredentials()
-                {
+                public AWSCredentials getCredentials() {
                     return new AnonymousAWSCredentials();
                 }
 
-                public void refresh()
-                {
+                public void refresh() {
                 }
             };
 
         case "session":
-            {
-                String accessKeyId = require(task.getAccessKeyId(),
-                        "'" + accessKeyIdOption + "', '" + secretAccessKeyOption + "', '" + sessionTokenOption + "'");
-                String secretAccessKey = require(task.getSecretAccessKey(),
-                        "'" + secretAccessKeyOption + "', '" + sessionTokenOption + "'");
-                String sessionToken = require(task.getSessionToken(),
-                        "'" + sessionTokenOption + "'");
-                reject(task.getProfileFile(), profileFileOption);
-                reject(task.getProfileName(), profileNameOption);
-                final AWSSessionCredentials creds = new BasicSessionCredentials(accessKeyId, secretAccessKey, sessionToken);
-                return new AWSSessionCredentialsProvider() {
-                    public AWSSessionCredentials getCredentials()
-                    {
-                        return creds;
-                    }
+        {
+            String accessKeyId = require(task.getAccessKeyId(),
+                    "'" + accessKeyIdOption + "', '" + secretAccessKeyOption + "', '" + sessionTokenOption + "'");
+            String secretAccessKey = require(task.getSecretAccessKey(),
+                    "'" + secretAccessKeyOption + "', '" + sessionTokenOption + "'");
+            String sessionToken = require(task.getSessionToken(),
+                    "'" + sessionTokenOption + "'");
+            reject(task.getProfileFile(), profileFileOption);
+            reject(task.getProfileName(), profileNameOption);
+            final AWSSessionCredentials creds = new BasicSessionCredentials(accessKeyId, secretAccessKey, sessionToken);
+            return new AWSSessionCredentialsProvider() {
+                public AWSSessionCredentials getCredentials() {
+                    return creds;
+                }
 
-                    public void refresh()
-                    {
-                    }
-                };
-            }
+                public void refresh() {
+                }
+            };
+        }
 
         case "default":
-            {
-                reject(task.getAccessKeyId(), accessKeyIdOption);
-                reject(task.getSecretAccessKey(), secretAccessKeyOption);
-                reject(task.getSessionToken(), sessionTokenOption);
-                reject(task.getProfileFile(), profileFileOption);
-                reject(task.getProfileName(), profileNameOption);
-                return new DefaultAWSCredentialsProviderChain();
-            }
+        {
+            reject(task.getAccessKeyId(), accessKeyIdOption);
+            reject(task.getSecretAccessKey(), secretAccessKeyOption);
+            reject(task.getSessionToken(), sessionTokenOption);
+            reject(task.getProfileFile(), profileFileOption);
+            reject(task.getProfileName(), profileNameOption);
+            return new DefaultAWSCredentialsProviderChain();
+        }
 
         default:
             throw new ConfigException(String.format("Unknown auth_method '%s'. Supported methods are basic, instance, profile, properties, anonymous, session and default.",
@@ -185,32 +169,26 @@ public abstract class AwsCredentials
         }
     }
 
-    private static AWSCredentialsProvider overwriteBasicCredentials(AwsCredentialsConfig task, final AWSCredentials creds)
-    {
+    private static AWSCredentialsProvider overwriteBasicCredentials(AwsCredentialsConfig task, final AWSCredentials creds) {
         return new AWSCredentialsProvider() {
-            public AWSCredentials getCredentials()
-            {
+            public AWSCredentials getCredentials() {
                 return creds;
             }
 
-            public void refresh()
-            {
+            public void refresh() {
             }
         };
     }
 
-    private static <T> T require(Optional<T> value, String message)
-    {
+    private static <T> T require(Optional<T> value, String message) {
         if (value.isPresent()) {
             return value.get();
-        }
-        else {
+        } else {
             throw new ConfigException("Required option is not set: " + message);
         }
     }
 
-    private static <T> void reject(Optional<T> value, String message)
-    {
+    private static <T> void reject(Optional<T> value, String message) {
         if (value.isPresent()) {
             throw new ConfigException("Invalid option is set: " + message);
         }
