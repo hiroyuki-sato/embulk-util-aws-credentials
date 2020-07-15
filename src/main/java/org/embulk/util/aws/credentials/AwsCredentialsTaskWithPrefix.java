@@ -4,6 +4,9 @@ import java.util.Optional;
 import org.embulk.util.config.Config;
 import org.embulk.util.config.ConfigDefault;
 
+/**
+ * An {@code interface} for Embulk's task-defining interface, with entries prefixed with {@code "aws_"}.
+ */
 public interface AwsCredentialsTaskWithPrefix extends AwsCredentialsConfig {
     @Override
     @Config("aws_auth_method")
