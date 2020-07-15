@@ -15,8 +15,8 @@ import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfilesConfigFile;
 import java.util.Optional;
 import org.embulk.config.ConfigException;
-import org.embulk.spi.Exec;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AwsCredentials {
     private AwsCredentials() {
@@ -42,7 +42,6 @@ public abstract class AwsCredentials {
         case "basic":
             // for backward compatibility
             if (!task.getAccessKeyId().isPresent() && !task.getAccessKeyId().isPresent()) {
-                final Logger log = Exec.getLogger(AwsCredentials.class);
                 log.warn("Both '{}' and '{}' are not set. Assuming that '{}: anonymous' option is set.",
                         accessKeyIdOption, secretAccessKeyOption, authMethodOption);
                 log.warn("If you intentionally use anonymous authentication, please set 'auth_method: anonymous' option.");
@@ -89,7 +88,7 @@ public abstract class AwsCredentials {
             reject(task.getSessionToken(), sessionTokenOption);
             reject(task.getProfileFile(), profileFileOption);
             reject(task.getProfileName(), profileNameOption);
-            return new InstanceProfileCredentialsProvider();
+            return createInstanceProfileCredentialsProvider();
 
         case "profile":
         {
@@ -193,4 +192,11 @@ public abstract class AwsCredentials {
             throw new ConfigException("Invalid option is set: " + message);
         }
     }
+
+    @SuppressWarnings("deprecation")
+    private static InstanceProfileCredentialsProvider createInstanceProfileCredentialsProvider() {
+        return new InstanceProfileCredentialsProvider();
+    }
+
+    private static final Logger log = LoggerFactory.getLogger(AwsCredentials.class);
 }
