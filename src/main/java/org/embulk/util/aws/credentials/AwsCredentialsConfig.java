@@ -1,7 +1,6 @@
 package org.embulk.util.aws.credentials;
 
 import java.util.Optional;
-import org.embulk.spi.unit.LocalFile;
 
 public interface AwsCredentialsConfig {
     String getAuthMethod();
@@ -20,9 +19,9 @@ public interface AwsCredentialsConfig {
 
     void setSessionToken(Optional<String> value);
 
-    Optional<LocalFile> getProfileFile();
+    Optional<String> getProfileFile();
 
-    void setProfileFile(Optional<LocalFile> value);
+    void setProfileFile(Optional<String> value);
 
     Optional<String> getProfileName();
 

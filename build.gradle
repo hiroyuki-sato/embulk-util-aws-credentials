@@ -25,7 +25,9 @@ repositories {
 
 dependencies {
     compileOnly "org.embulk:embulk-api:0.10.5"
-    compileOnly "org.embulk:embulk-core:0.10.5"
+    compileOnly "org.slf4j:slf4j-api:1.7.12"
+
+    api "org.embulk:embulk-util-config:0.1.1"
 
     api("com.amazonaws:aws-java-sdk-s3:1.11.466") {
         exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
