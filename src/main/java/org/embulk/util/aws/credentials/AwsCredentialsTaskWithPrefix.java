@@ -1,9 +1,8 @@
 package org.embulk.util.aws.credentials;
 
 import java.util.Optional;
-import org.embulk.config.Config;
-import org.embulk.config.ConfigDefault;
-import org.embulk.spi.unit.LocalFile;
+import org.embulk.util.config.Config;
+import org.embulk.util.config.ConfigDefault;
 
 public interface AwsCredentialsTaskWithPrefix extends AwsCredentialsConfig {
     @Override
@@ -29,7 +28,7 @@ public interface AwsCredentialsTaskWithPrefix extends AwsCredentialsConfig {
     @Override
     @Config("aws_profile_file")
     @ConfigDefault("null")
-    Optional<LocalFile> getProfileFile();
+    Optional<String> getProfileFile();
 
     @Override
     @Config("aws_profile_name")

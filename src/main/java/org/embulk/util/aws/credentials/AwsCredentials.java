@@ -13,6 +13,8 @@ import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.SystemPropertiesCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfilesConfigFile;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import org.embulk.config.ConfigException;
 import org.slf4j.Logger;
@@ -99,7 +101,8 @@ public abstract class AwsCredentials {
             String profileName = task.getProfileName().orElse("default");
             ProfileCredentialsProvider provider;
             if (task.getProfileFile().isPresent()) {
-                ProfilesConfigFile file = new ProfilesConfigFile(task.getProfileFile().get().getFile());
+                final Path profileFilePath = Paths.get(task.getProfileFile().get());
+                final ProfilesConfigFile file = new ProfilesConfigFile(profileFilePath.toFile());
                 provider = new ProfileCredentialsProvider(file, profileName);
             } else {
                 provider = new ProfileCredentialsProvider(profileName);
