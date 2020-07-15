@@ -20,14 +20,30 @@ import org.embulk.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A utility class to generate {@link com.amazonaws.auth.AWSCredentialsProvider} from Embulk's task-defining interface.
+ */
 public abstract class AwsCredentials {
     private AwsCredentials() {
+        // No instantiation.
     }
 
+    /**
+     * Creates {@link com.amazonaws.auth.AWSCredentialsProvider} from entries prefixed with {@code "aws_"} in task definition.
+     *
+     * @param task  An entry in Embulk's task defining interface
+     * @return {@link com.amazonaws.auth.AWSCredentialsProvider} created
+     */
     public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTaskWithPrefix task) {
         return getAWSCredentialsProvider("aws_", task);
     }
 
+    /**
+     * Creates {@link com.amazonaws.auth.AWSCredentialsProvider} from entries in task definition.
+     *
+     * @param task  An entry in Embulk's task defining interface
+     * @return {@link com.amazonaws.auth.AWSCredentialsProvider} created
+     */
     public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTask task) {
         return getAWSCredentialsProvider("", task);
     }

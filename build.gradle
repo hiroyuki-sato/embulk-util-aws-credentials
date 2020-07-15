@@ -70,6 +70,8 @@ javadoc {
         encoding = "UTF-8"
         overview = "src/main/html/overview.html"
         links "https://docs.oracle.com/javase/8/docs/api/"
+        links "https://dev.embulk.org/embulk-util-config/0.1.1/javadoc/"
+        links "https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/"
     }
 }
 
