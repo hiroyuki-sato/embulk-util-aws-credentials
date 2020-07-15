@@ -1,11 +1,9 @@
 package org.embulk.util.aws.credentials;
 
+import java.util.Optional;
 import org.embulk.spi.unit.LocalFile;
 
-import java.util.Optional;
-
-public interface AwsCredentialsConfig
-{
+public interface AwsCredentialsConfig {
     String getAuthMethod();
 
     void setAuthMethod(String method);
