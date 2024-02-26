@@ -1,18 +1,18 @@
 package org.embulk.util.aws.credentials;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSSessionCredentials;
-import com.amazonaws.auth.AWSSessionCredentialsProvider;
-import com.amazonaws.auth.AnonymousAWSCredentials;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.BasicSessionCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.auth.InstanceProfileCredentialsProvider;
-import com.amazonaws.auth.SystemPropertiesCredentialsProvider;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.auth.profile.ProfilesConfigFile;
+import software.amazon.awssdk.auth.AWSCredentials;
+import software.amazon.awssdk.auth.AWSCredentialsProvider;
+import software.amazon.awssdk.auth.AWSSessionCredentials;
+import software.amazon.awssdk.auth.AWSSessionCredentialsProvider;
+import software.amazon.awssdk.auth.AnonymousAWSCredentials;
+import software.amazon.awssdk.auth.BasicAWSCredentials;
+import software.amazon.awssdk.auth.BasicSessionCredentials;
+import software.amazon.awssdk.auth.DefaultAWSCredentialsProviderChain;
+import software.amazon.awssdk.auth.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.auth.InstanceProfileCredentialsProvider;
+import software.amazon.awssdk.auth.SystemPropertiesCredentialsProvider;
+import software.amazon.awssdk.auth.profile.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.profile.ProfilesConfigFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A utility class to generate {@link com.amazonaws.auth.AWSCredentialsProvider} from Embulk's task-defining interface.
+ * A utility class to generate {@link software.amazon.awssdk.auth.AWSCredentialsProvider} from Embulk's task-defining interface.
  */
 public abstract class AwsCredentials {
     private AwsCredentials() {
@@ -29,20 +29,20 @@ public abstract class AwsCredentials {
     }
 
     /**
-     * Creates {@link com.amazonaws.auth.AWSCredentialsProvider} from entries prefixed with {@code "aws_"} in task definition.
+     * Creates {@link software.amazon.awssdk.auth.AWSCredentialsProvider} from entries prefixed with {@code "aws_"} in task definition.
      *
      * @param task  An entry in Embulk's task defining interface
-     * @return {@link com.amazonaws.auth.AWSCredentialsProvider} created
+     * @return {@link software.amazon.awssdk.auth.AWSCredentialsProvider} created
      */
     public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTaskWithPrefix task) {
         return getAWSCredentialsProvider("aws_", task);
     }
 
     /**
-     * Creates {@link com.amazonaws.auth.AWSCredentialsProvider} from entries in task definition.
+     * Creates {@link software.amazon.awssdk.auth.AWSCredentialsProvider} from entries in task definition.
      *
      * @param task  An entry in Embulk's task defining interface
-     * @return {@link com.amazonaws.auth.AWSCredentialsProvider} created
+     * @return {@link software.amazon.awssdk.auth.AWSCredentialsProvider} created
      */
     public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTask task) {
         return getAWSCredentialsProvider("", task);
