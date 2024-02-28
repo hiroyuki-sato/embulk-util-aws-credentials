@@ -1,16 +1,20 @@
 package org.embulk.util.aws.credentials;
 
-import software.amazon.awssdk.auth.AWSCredentials;
-import software.amazon.awssdk.auth.AWSCredentialsProvider;
-import software.amazon.awssdk.auth.AWSSessionCredentials;
-import software.amazon.awssdk.auth.AWSSessionCredentialsProvider;
-import software.amazon.awssdk.auth.AnonymousAWSCredentials;
-import software.amazon.awssdk.auth.BasicAWSCredentials;
-import software.amazon.awssdk.auth.BasicSessionCredentials;
-import software.amazon.awssdk.auth.DefaultAWSCredentialsProviderChain;
-import software.amazon.awssdk.auth.EnvironmentVariableCredentialsProvider;
-import software.amazon.awssdk.auth.InstanceProfileCredentialsProvider;
-import software.amazon.awssdk.auth.SystemPropertiesCredentialsProvider;
+//conflict
+//import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+// https://github.com/aws/aws-sdk-java-v2/issues/3834
+// Java SDK v2 does not have an equivalent of v1 interface AWSSessionCredentialsProvider but all its implementing classes in v1 are implemented in v2, check the AwsCredentialsProvider for more info.
+//import software.amazon.awssdk.auth.credentials.AwsSessionCredentialsProvider;
+//import software.amazon.awssdk.auth.credentials.BasicSessionCredentials;
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.SystemPropertiesCredentialsProvider;
 import software.amazon.awssdk.auth.profile.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.profile.ProfilesConfigFile;
 import java.nio.file.Path;
@@ -21,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A utility class to generate {@link software.amazon.awssdk.auth.AWSCredentialsProvider} from Embulk's task-defining interface.
+ * A utility class to generate {@link software.amazon.awssdk.auth.credentials.AwsCredentialsProvider} from Embulk's task-defining interface.
  */
 public abstract class AwsCredentials {
     private AwsCredentials() {
@@ -29,26 +33,26 @@ public abstract class AwsCredentials {
     }
 
     /**
-     * Creates {@link software.amazon.awssdk.auth.AWSCredentialsProvider} from entries prefixed with {@code "aws_"} in task definition.
+     * Creates {@link software.amazon.awssdk.auth.credentials.AwsCredentialsProvider} from entries prefixed with {@code "aws_"} in task definition.
      *
      * @param task  An entry in Embulk's task defining interface
-     * @return {@link software.amazon.awssdk.auth.AWSCredentialsProvider} created
+     * @return {@link software.amazon.awssdk.auth.credentials.AwsCredentialsProvider} created
      */
-    public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTaskWithPrefix task) {
+    public static AwsCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTaskWithPrefix task) {
         return getAWSCredentialsProvider("aws_", task);
     }
 
     /**
-     * Creates {@link software.amazon.awssdk.auth.AWSCredentialsProvider} from entries in task definition.
+     * Creates {@link software.amazon.awssdk.auth.credentials.AwsCredentialsProvider} from entries in task definition.
      *
      * @param task  An entry in Embulk's task defining interface
-     * @return {@link software.amazon.awssdk.auth.AWSCredentialsProvider} created
+     * @return {@link software.amazon.awssdk.auth.credentials.AwsCredentialsProvider} created
      */
-    public static AWSCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTask task) {
+    public static AwsCredentialsProvider getAWSCredentialsProvider(AwsCredentialsTask task) {
         return getAWSCredentialsProvider("", task);
     }
 
-    private static AWSCredentialsProvider getAWSCredentialsProvider(String prefix, AwsCredentialsConfig task) {
+    private static AwsCredentialsProvider getAWSCredentialsProvider(String prefix, AwsCredentialsConfig task) {
         String authMethodOption = prefix + "auth_method";
         String sessionTokenOption = prefix + "session_token";
         String profileFileOption = prefix + "profile_file";
@@ -67,7 +71,7 @@ public abstract class AwsCredentials {
                 reject(task.getSessionToken(), sessionTokenOption);
                 reject(task.getProfileFile(), profileFileOption);
                 reject(task.getProfileName(), profileNameOption);
-                return new AWSCredentialsProvider() {
+                return new AwsCredentialsProvider() {
                     public AWSCredentials getCredentials() {
                         return new AnonymousAWSCredentials();
                     }
@@ -141,7 +145,7 @@ public abstract class AwsCredentials {
             reject(task.getSessionToken(), sessionTokenOption);
             reject(task.getProfileFile(), profileFileOption);
             reject(task.getProfileName(), profileNameOption);
-            return new AWSCredentialsProvider() {
+            return new AwsCredentialsProvider() {
                 public AWSCredentials getCredentials() {
                     return new AnonymousAWSCredentials();
                 }
@@ -150,6 +154,7 @@ public abstract class AwsCredentials {
                 }
             };
 
+/* TODO: Raise Exception
         case "session":
         {
             String accessKeyId = require(task.getAccessKeyId(),
@@ -170,6 +175,7 @@ public abstract class AwsCredentials {
                 }
             };
         }
+ */
 
         case "default":
         {
@@ -187,7 +193,7 @@ public abstract class AwsCredentials {
         }
     }
 
-    private static AWSCredentialsProvider overwriteBasicCredentials(AwsCredentialsConfig task, final AWSCredentials creds) {
+    private static AwsCredentialsProvider overwriteBasicCredentials(AwsCredentialsConfig task, final AWSCredentials creds) {
         return new AWSCredentialsProvider() {
             public AWSCredentials getCredentials() {
                 return creds;
