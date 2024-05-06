@@ -2,27 +2,20 @@ package org.embulk.util.aws.credentials;
 
 //conflict
 //import software.amazon.awssdk.auth.credentials.AwsCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.*;
 // https://github.com/aws/aws-sdk-java-v2/issues/3834
 // Java SDK v2 does not have an equivalent of v1 interface AWSSessionCredentialsProvider but all its implementing classes in v1 are implemented in v2, check the AwsCredentialsProvider for more info.
 //import software.amazon.awssdk.auth.credentials.AwsSessionCredentialsProvider;
 //import software.amazon.awssdk.auth.credentials.BasicSessionCredentials;
-import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.SystemPropertiesCredentialsProvider;
-import software.amazon.awssdk.auth.profile.ProfileCredentialsProvider;
-import software.amazon.awssdk.auth.profile.ProfilesConfigFile;
+import software.amazon.awssdk.profiles.ProfileFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import org.embulk.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.profiles.ProfileFileSupplier;
 
 /**
  * A utility class to generate {@link software.amazon.awssdk.auth.credentials.AwsCredentialsProvider} from Embulk's task-defining interface.
@@ -71,29 +64,14 @@ public abstract class AwsCredentials {
                 reject(task.getSessionToken(), sessionTokenOption);
                 reject(task.getProfileFile(), profileFileOption);
                 reject(task.getProfileName(), profileNameOption);
-                return new AwsCredentialsProvider() {
-                    public AWSCredentials getCredentials() {
-                        return new AnonymousAWSCredentials();
-                    }
-
-                    public void refresh() {
-                    }
-                };
+                return AnonymousCredentialsProvider.create();
             } else {
                 reject(task.getSessionToken(), sessionTokenOption);
                 reject(task.getProfileFile(), profileFileOption);
                 reject(task.getProfileName(), profileNameOption);
                 final String accessKeyId = require(task.getAccessKeyId(), "'access_key_id', 'secret_access_key'");
                 final String secretAccessKey = require(task.getSecretAccessKey(), "'secret_access_key'");
-                final BasicAWSCredentials creds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
-                return new AWSCredentialsProvider() {
-                    public AWSCredentials getCredentials() {
-                        return creds;
-                    }
-
-                    public void refresh() {
-                    }
-                };
+                return StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey));
             }
 
         case "env":
@@ -102,15 +80,10 @@ public abstract class AwsCredentials {
             reject(task.getSessionToken(), sessionTokenOption);
             reject(task.getProfileFile(), profileFileOption);
             reject(task.getProfileName(), profileNameOption);
-            return overwriteBasicCredentials(task, new EnvironmentVariableCredentialsProvider().getCredentials());
+            return EnvironmentVariableCredentialsProvider.create();
 
         case "instance":
-            reject(task.getAccessKeyId(), accessKeyIdOption);
-            reject(task.getSecretAccessKey(), secretAccessKeyOption);
-            reject(task.getSessionToken(), sessionTokenOption);
-            reject(task.getProfileFile(), profileFileOption);
-            reject(task.getProfileName(), profileNameOption);
-            return createInstanceProfileCredentialsProvider();
+            throw new ConfigException("deprecated");
 
         case "profile":
         {
@@ -122,13 +95,13 @@ public abstract class AwsCredentials {
             ProfileCredentialsProvider provider;
             if (task.getProfileFile().isPresent()) {
                 final Path profileFilePath = Paths.get(task.getProfileFile().get());
-                final ProfilesConfigFile file = new ProfilesConfigFile(profileFilePath.toFile());
-                provider = new ProfileCredentialsProvider(file, profileName);
-            } else {
-                provider = new ProfileCredentialsProvider(profileName);
+                return ProfileCredentialsProvider
+                        .builder()
+                        .profileFile(ProfileFileSupplier.reloadWhenModified(profileFilePath,ProfileFile.Type.CONFIGURATION))
+                        .profileName(profileName)
+                        .build();
             }
-
-            return overwriteBasicCredentials(task, provider.getCredentials());
+            return ProfileCredentialsProvider.create(profileName);
         }
 
         case "properties":
@@ -137,7 +110,7 @@ public abstract class AwsCredentials {
             reject(task.getSessionToken(), sessionTokenOption);
             reject(task.getProfileFile(), profileFileOption);
             reject(task.getProfileName(), profileNameOption);
-            return overwriteBasicCredentials(task, new SystemPropertiesCredentialsProvider().getCredentials());
+            return SystemPropertyCredentialsProvider.create();
 
         case "anonymous":
             reject(task.getAccessKeyId(), accessKeyIdOption);
@@ -145,14 +118,7 @@ public abstract class AwsCredentials {
             reject(task.getSessionToken(), sessionTokenOption);
             reject(task.getProfileFile(), profileFileOption);
             reject(task.getProfileName(), profileNameOption);
-            return new AwsCredentialsProvider() {
-                public AWSCredentials getCredentials() {
-                    return new AnonymousAWSCredentials();
-                }
-
-                public void refresh() {
-                }
-            };
+            return AnonymousCredentialsProvider.create();
 
 /* TODO: Raise Exception
         case "session":
@@ -184,24 +150,13 @@ public abstract class AwsCredentials {
             reject(task.getSessionToken(), sessionTokenOption);
             reject(task.getProfileFile(), profileFileOption);
             reject(task.getProfileName(), profileNameOption);
-            return new DefaultAWSCredentialsProviderChain();
+            return DefaultCredentialsProvider.create();
         }
 
         default:
             throw new ConfigException(String.format("Unknown auth_method '%s'. Supported methods are basic, instance, profile, properties, anonymous, session and default.",
                         task.getAuthMethod()));
         }
-    }
-
-    private static AwsCredentialsProvider overwriteBasicCredentials(AwsCredentialsConfig task, final AWSCredentials creds) {
-        return new AWSCredentialsProvider() {
-            public AWSCredentials getCredentials() {
-                return creds;
-            }
-
-            public void refresh() {
-            }
-        };
     }
 
     private static <T> T require(Optional<T> value, String message) {
@@ -218,10 +173,13 @@ public abstract class AwsCredentials {
         }
     }
 
+/*
     @SuppressWarnings("deprecation")
     private static InstanceProfileCredentialsProvider createInstanceProfileCredentialsProvider() {
         return new InstanceProfileCredentialsProvider();
     }
+
+ */
 
     private static final Logger log = LoggerFactory.getLogger(AwsCredentials.class);
 }
