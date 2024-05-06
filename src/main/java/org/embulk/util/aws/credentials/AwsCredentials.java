@@ -2,20 +2,25 @@ package org.embulk.util.aws.credentials;
 
 //conflict
 //import software.amazon.awssdk.auth.credentials.AwsCredentials;
-import software.amazon.awssdk.auth.credentials.*;
-// https://github.com/aws/aws-sdk-java-v2/issues/3834
-// Java SDK v2 does not have an equivalent of v1 interface AWSSessionCredentialsProvider but all its implementing classes in v1 are implemented in v2, check the AwsCredentialsProvider for more info.
-//import software.amazon.awssdk.auth.credentials.AwsSessionCredentialsProvider;
-//import software.amazon.awssdk.auth.credentials.BasicSessionCredentials;
 
-import software.amazon.awssdk.profiles.ProfileFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+
 import org.embulk.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
+import software.amazon.awssdk.profiles.ProfileFile;
 import software.amazon.awssdk.profiles.ProfileFileSupplier;
+
 
 /**
  * A utility class to generate {@link software.amazon.awssdk.auth.credentials.AwsCredentialsProvider} from Embulk's task-defining interface.
@@ -120,7 +125,7 @@ public abstract class AwsCredentials {
             reject(task.getProfileName(), profileNameOption);
             return AnonymousCredentialsProvider.create();
 
-/* TODO: Raise Exception
+            /* TODO: Raise Exception
         case "session":
         {
             String accessKeyId = require(task.getAccessKeyId(),
@@ -141,7 +146,7 @@ public abstract class AwsCredentials {
                 }
             };
         }
- */
+        */
 
         case "default":
         {
@@ -173,13 +178,12 @@ public abstract class AwsCredentials {
         }
     }
 
-/*
+    /*
     @SuppressWarnings("deprecation")
     private static InstanceProfileCredentialsProvider createInstanceProfileCredentialsProvider() {
         return new InstanceProfileCredentialsProvider();
     }
-
- */
+    */
 
     private static final Logger log = LoggerFactory.getLogger(AwsCredentials.class);
 }
